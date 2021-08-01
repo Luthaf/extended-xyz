@@ -20,12 +20,18 @@ with newlines *)
 
 (* Arrays properties *)
 <Array> = { <NewStyleArray> | <OldStyleArrayQuote> | <OldStyleArrayBrackets> };
-<NewStyleArray> = '[' {
+
+<NewStyleArray> = <NewStyleArray1D> | <NewStyleArray2D>;
+<NewStyleArray1D> = '[' <whitespaces>? {
     { <Integer> { <whitespaces>? ',' <whitespaces>? <Integer>}* }    |
     { <Float> { <whitespaces>? ',' <whitespaces>? <Float>}* }        |
     { <String> { <whitespaces>? ',' <whitespaces>? <String> }* }     |
     { <Logical> { <whitespaces>? ',' <whitespaces>? <Logical> }* }
-} ']';
+} <whitespaces>? ']';
+
+<NewStyleArray2D> = '[' <whitespaces>?
+    { <NewStyleArray1D> { <whitespaces>? ',' <whitespaces>? <NewStyleArray1D>}* }
+<whitespaces>? ']';
 
 <OldStyleArrayQuote> = '"' {
     { <Integer> { <whitespaces> <Integer> }* }              |

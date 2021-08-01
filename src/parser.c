@@ -692,18 +692,15 @@ error:
     return status;
 }
 
-static exyz_status_t try_read_new_style_array(parser_context_t* ctx, exyz_array_t* array) {
+static exyz_status_t try_read_new_style_array_1d(parser_context_t* ctx, exyz_array_t* array) {
     if (ctx->string[ctx->current] != '[') {
-        return error("array must start with [, got '%c'", ctx->string[ctx->current]);
+        return error("1D array must start with [, got '%c'", ctx->string[ctx->current]);
     }
-
-    // TODO: 2D arrays
 
     size_t ctx_start = ctx->current;
     ctx->current += 1;
 
     exyz_status_t status = EXYZ_SUCCESS;
-    size_t current_index = 0;
 
     // count the number of entries in the array, and try to guess the type of
     // the array
@@ -756,22 +753,15 @@ static exyz_status_t try_read_new_style_array(parser_context_t* ctx, exyz_array_
         goto error;
     }
 
-
-    while (ctx->current < ctx->length) {
+    for (size_t i=0; i<n_cols-1; i++) {
         skip_whitespaces(ctx);
 
-        status = read_array_value(ctx, *array, current_index);
+        status = read_array_value(ctx, *array, i);
         if (status != EXYZ_SUCCESS) {
             goto error;
         }
-        current_index += 1;
 
         skip_whitespaces(ctx);
-
-        if (ctx->string[ctx->current] == ']') {
-            ctx->current += 1;
-            break;
-        }
 
         if (ctx->string[ctx->current] != ',') {
             status = error("expected comma in array, got '%c'", ctx->string[ctx->current]);
@@ -780,6 +770,17 @@ static exyz_status_t try_read_new_style_array(parser_context_t* ctx, exyz_array_
         ctx->current += 1;
     }
 
+    // read the last value
+    skip_whitespaces(ctx);
+    status = read_array_value(ctx, *array, n_cols - 1);
+    if (status != EXYZ_SUCCESS) {
+        goto error;
+    }
+
+    skip_whitespaces(ctx);
+    assert(ctx->string[ctx->current] == ']');
+    ctx->current += 1;
+
     return EXYZ_SUCCESS;
 error:
     // reset parser state
@@ -787,6 +788,193 @@ error:
     exyz_array_free(*array);
 
     return status;
+}
+
+static exyz_status_t try_read_new_style_array_2d(parser_context_t* ctx, exyz_array_t* array) {
+    if (ctx->string[ctx->current] != '[') {
+        return error("2D array must start with [, got '%c'", ctx->string[ctx->current]);
+    }
+
+    size_t ctx_start = ctx->current;
+    ctx->current += 1;
+
+    skip_whitespaces(ctx);
+    if (ctx->string[ctx->current] != '[') {
+        return error("expected nested arrays in 2D array, got '%c'", ctx->string[ctx->current]);
+    }
+    ctx->current += 1;
+
+    exyz_status_t status = EXYZ_SUCCESS;
+
+    // count the number of entries in the array, and try to guess the type of
+    // the array
+    size_t n_rows = 0;
+    size_t n_cols = SIZE_MAX;
+
+    size_t subarray_size = 0;
+    bool in_subarray = true;
+
+    bool found_array_end = false;
+    exyz_data_t type = EXYZ_INTEGER;
+    while (ctx->current < ctx->length) {
+        skip_whitespaces(ctx);
+
+        if (ctx->string[ctx->current] == '[') {
+            if (in_subarray) {
+                status = error("invalid nested sub-arrays");
+                goto error;
+            }
+            in_subarray = true;
+            subarray_size = 0;
+            ctx->current += 1;
+        }
+
+        skip_whitespaces(ctx);
+
+        status = get_array_value_type(ctx, &type);
+        if (status != EXYZ_SUCCESS) {
+            goto error;
+        }
+        subarray_size += 1;
+
+        skip_whitespaces(ctx);
+
+        if (ctx->string[ctx->current] == ']') {
+            if (!in_subarray) {
+                status = error("todo: how did we get here?");
+            }
+
+            in_subarray = false;
+            ctx->current += 1;
+            n_rows += 1;
+
+            // validate size of the different sub-arrays
+            if (n_cols == SIZE_MAX) {
+                n_cols = subarray_size;
+                subarray_size = 0;
+            } else if (subarray_size != n_cols) {
+                status = error(
+                    "invalid size for 2D array: previous array had %d elements, "
+                    "the current one has %d", n_cols, subarray_size
+                );
+                goto error;
+            }
+
+            // is this the end of the full array?
+            skip_whitespaces(ctx);
+            if (ctx->string[ctx->current] == ']') {
+                found_array_end = true;
+                break;
+            }
+        }
+
+        if (ctx->string[ctx->current] != ',') {
+            status = error("expected comma in array between values, got '%c'", ctx->string[ctx->current]);
+            goto error;
+        }
+        ctx->current += 1;
+    }
+
+    if (!found_array_end) {
+        return error("expected ']' to finish the array, found end of input");
+    }
+
+    // reset parser
+    ctx->current = ctx_start + 1;
+    // allocate the array and read it
+    if (type == EXYZ_INTEGER) {
+        status = exyz_array_init_integer(array, n_rows, n_cols);
+    } else if (type == EXYZ_REAL) {
+        status = exyz_array_init_real(array, n_rows, n_cols);
+    } else if (type == EXYZ_BOOL) {
+        status = exyz_array_init_bool(array, n_rows, n_cols);
+    } else {
+        assert(type == EXYZ_STRING);
+        status = exyz_array_init_string(array, n_rows, n_cols);
+    }
+
+    if (status != EXYZ_SUCCESS) {
+        goto error;
+    }
+
+    for (size_t i=0; i<n_rows; i++) {
+        skip_whitespaces(ctx);
+        if (ctx->string[ctx->current] != '[') {
+            status = error("expected subarray, got '%c'", ctx->string[ctx->current]);
+            goto error;
+        }
+        ctx->current += 1;
+
+        for (size_t j=0; j<n_cols - 1; j++) {
+            skip_whitespaces(ctx);
+
+            status = read_array_value(ctx, *array, i * n_cols + j);
+            if (status != EXYZ_SUCCESS) {
+                goto error;
+            }
+
+            skip_whitespaces(ctx);
+            if (ctx->string[ctx->current] != ',') {
+                status = error("expected comma in array, got '%c'", ctx->string[ctx->current]);
+                goto error;
+            }
+            ctx->current += 1;
+        }
+
+        // read the last value
+        skip_whitespaces(ctx);
+        status = read_array_value(ctx, *array, i * n_cols + n_cols - 1);
+        if (status != EXYZ_SUCCESS) {
+            goto error;
+        }
+
+        // close the sub-array
+        skip_whitespaces(ctx);
+        if (ctx->string[ctx->current] != ']') {
+            status = error("expected end of subarray, got '%c'", ctx->string[ctx->current]);
+            goto error;
+        }
+        ctx->current += 1;
+
+        skip_whitespaces(ctx);
+        if (i < n_rows - 1) {
+            if (ctx->string[ctx->current] != ',') {
+                status = error("expected comma in array, got '%c'", ctx->string[ctx->current]);
+                goto error;
+            }
+            ctx->current += 1;
+        }
+    }
+
+    skip_whitespaces(ctx);
+    assert(ctx->string[ctx->current] == ']');
+    ctx->current += 1;
+
+    return EXYZ_SUCCESS;
+error:
+    // reset parser state
+    ctx->current = ctx_start;
+    exyz_array_free(*array);
+
+    return status;
+}
+
+static exyz_status_t try_read_new_style_array(parser_context_t* ctx, exyz_array_t* array) {
+    if (ctx->string[ctx->current] != '[') {
+        return error("array must start with [, got '%c'", ctx->string[ctx->current]);
+    }
+
+    size_t start = ctx->current;
+
+    ctx->current += 1;
+    skip_whitespaces(ctx);
+    if (ctx->string[ctx->current] == '[') {
+        ctx->current = start;
+        return try_read_new_style_array_2d(ctx, array);
+    } else {
+        ctx->current = start;
+        return try_read_new_style_array_1d(ctx, array);
+    }
 }
 
 static exyz_status_t try_read_array(parser_context_t* ctx, exyz_array_t* array) {

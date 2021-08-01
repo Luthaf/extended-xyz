@@ -360,7 +360,119 @@ TEST_CASE("Multiple values") {
     free_data(properties, properties_count, info, info_count);
 }
 
-TEST_CASE("Array properties -- new style") {
+TEST_CASE("Array properties -- new style -- 2D") {
+    exyz_atom_property_t* properties = nullptr;
+    size_t properties_count = 0;
+
+    exyz_info_t* info = nullptr;
+    size_t info_count = 0;
+
+    SECTION("integers") {
+        std::string line = "Properties=species:S:1:pos:R:3 key=  [  [ 1  , 2 ]   ,  [\t3 , -4  ]  ]";
+        auto status = exyz_read_comment_line(
+            line.data(), line.size(), &properties, &properties_count, &info, &info_count
+        );
+        REQUIRE(status == EXYZ_SUCCESS);
+
+        REQUIRE(info_count == 1);
+        CHECK(info[0].key == std::string("key"));
+        REQUIRE(info[0].type == EXYZ_ARRAY);
+
+        exyz_array_t array = info[0].data.array;
+        CHECK(array.type == EXYZ_INTEGER);
+        REQUIRE(array.nrows == 2);
+        REQUIRE(array.ncols == 2);
+        CHECK(array.data.integer[0] == 1);
+        CHECK(array.data.integer[1] == 2);
+        CHECK(array.data.integer[2] == 3);
+        CHECK(array.data.integer[3] == -4);
+
+        free_data(properties, properties_count, info, info_count);
+    }
+
+    SECTION("real") {
+        std::string line = "Properties=species:S:1:pos:R:3 key=[[1, 2], [3e3, 5.5]]";
+        auto status = exyz_read_comment_line(
+            line.data(), line.size(), &properties, &properties_count, &info, &info_count
+        );
+        REQUIRE(status == EXYZ_SUCCESS);
+
+        REQUIRE(info_count == 1);
+        CHECK(info[0].key == std::string("key"));
+        REQUIRE(info[0].type == EXYZ_ARRAY);
+
+        exyz_array_t array = info[0].data.array;
+        CHECK(array.type == EXYZ_REAL);
+        REQUIRE(array.nrows == 2);
+        REQUIRE(array.ncols == 2);
+        CHECK(array.data.real[0] == 1);
+        CHECK(array.data.real[1] == 2);
+        CHECK(array.data.real[2] == 3e3);
+        CHECK(array.data.real[3] == 5.5);
+
+        free_data(properties, properties_count, info, info_count);
+    }
+
+    SECTION("bool") {
+        std::string line = "Properties=species:S:1:pos:R:3 key=[[False, TRUE, F], [T, F, F]]";
+        auto status = exyz_read_comment_line(
+            line.data(), line.size(), &properties, &properties_count, &info, &info_count
+        );
+        REQUIRE(status == EXYZ_SUCCESS);
+
+        REQUIRE(info_count == 1);
+        CHECK(info[0].key == std::string("key"));
+        REQUIRE(info[0].type == EXYZ_ARRAY);
+
+        exyz_array_t array = info[0].data.array;
+        CHECK(array.type == EXYZ_BOOL);
+        REQUIRE(array.nrows == 2);
+        REQUIRE(array.ncols == 3);
+        CHECK(array.data.boolean[0] == false);
+        CHECK(array.data.boolean[1] == true);
+        CHECK(array.data.boolean[2] == false);
+        CHECK(array.data.boolean[3] == true);
+        CHECK(array.data.boolean[4] == false);
+        CHECK(array.data.boolean[5] == false);
+
+        free_data(properties, properties_count, info, info_count);
+    }
+
+    SECTION("strings") {
+        std::string line = "Properties=species:S:1:pos:R:3 key=[[3, 33.4, -4], [True, bar, \"string  \"]]";
+        auto status = exyz_read_comment_line(
+            line.data(), line.size(), &properties, &properties_count, &info, &info_count
+        );
+        REQUIRE(status == EXYZ_SUCCESS);
+
+        REQUIRE(info_count == 1);
+        CHECK(info[0].key == std::string("key"));
+        REQUIRE(info[0].type == EXYZ_ARRAY);
+
+        auto array = info[0].data.array;
+        CHECK(array.type == EXYZ_STRING);
+        REQUIRE(array.nrows == 2);
+        REQUIRE(array.ncols == 3);
+        CHECK(array.data.string[0] == std::string("3"));
+        CHECK(array.data.string[1] == std::string("33.4"));
+        CHECK(array.data.string[2] == std::string("-4"));
+        CHECK(array.data.string[3] == std::string("True"));
+        CHECK(array.data.string[4] == std::string("bar"));
+        CHECK(array.data.string[5] == std::string("string  "));
+
+        free_data(properties, properties_count, info, info_count);
+    }
+
+    SECTION("errors") {
+        // TODO: missing comma
+
+        // TODO: extraneous comma
+
+        // TODO: not matching sizes in 2D array
+    }
+}
+
+TEST_CASE("Array properties -- new style -- 1D") {
     exyz_atom_property_t* properties = nullptr;
     size_t properties_count = 0;
 
