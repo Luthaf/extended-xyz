@@ -1,0 +1,21 @@
+enable_language(CXX)
+set(CMAKE_CXX_STANDARD 11)
+set(CMAKE_CXX_STANDARD_REQUIRED TRUE)
+
+if(${EXYZ_SANITIZERS})
+    add_sanitizer(CXX "address")
+    add_sanitizer(CXX "memory")
+    add_sanitizer(CXX "undefined")
+    add_sanitizer(CXX "leak")
+endif()
+
+add_library(catch catch/catch.cpp)
+target_include_directories(catch PUBLIC catch)
+
+file(GLOB ALL_TESTS *.cpp)
+foreach(_file_ ${ALL_TESTS})
+    get_filename_component(_name_ ${_file_} NAME_WE)
+    add_executable(${_name_} ${_file_})
+    target_link_libraries(${_name_} exyz catch)
+    add_test(${_name_} ${_name_})
+endforeach()

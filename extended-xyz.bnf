@@ -1,0 +1,98 @@
+(* File contains one or more frames separated by newlines, and optionally ends
+with newlines *)
+<File> = <Frame> { <newline> <Frame> }* { <newline> }? { <newline> }?;
+
+(* Frame starts with the number of atoms, then a comment line and then atom lines *)
+<Frame> = <UnsignedInteger> <newline> <CommentLine> { <newline> <AtomLine> }*;
+
+(* ============ Comment line specification ============ *)
+<CommentLine> = <FrameProperty> { <whitespaces> <FrameProperty> }+;
+
+<FrameProperty> = { <AtomPropertiesDeclaration> | <GenericFrameProperty> };
+
+<GenericFrameProperty> = <String> <whitespaces>? '=' <whitespaces>? <FramePropertyValue>;
+<FramePropertyValue> = { <Number> | <String> | <Logical> | <Array> };
+
+(* Atom properties declaration *)
+<AtomPropertiesDeclaration> = '"'? 'Properties' '"'? <whitespaces>? '=' <whitespaces>? '"'? <AtomPropertiesList> '"'?;
+<AtomPropertiesList> = { <Identifier> ':' <AtomPropertyType> ':' <UnsignedInteger> }+;
+<AtomPropertyType> = 'L' | 'S' | 'R' | 'I';
+
+(* Arrays properties *)
+<Array> = { <NewStyleArray> | <OldStyleArrayQuote> | <OldStyleArrayBrackets> };
+<NewStyleArray> = '[' {
+    { <Integer> { <whitespaces>? ',' <whitespaces>? <Integer>}* }    |
+    { <Float> { <whitespaces>? ',' <whitespaces>? <Float>}* }        |
+    { <String> { <whitespaces>? ',' <whitespaces>? <String> }* }     |
+    { <Logical> { <whitespaces>? ',' <whitespaces>? <Logical> }* }
+} ']';
+
+<OldStyleArrayQuote> = '"' {
+    { <Integer> { <whitespaces> <Integer> }* }              |
+    { <Float> { <whitespaces> <Float> }* }                  |
+    { <Logical> { <whitespaces> <Logical> }* }
+} '"';
+
+<OldStyleArrayBrackets> = '{' <String> { <whitespaces> <String> }* '}';
+
+
+(* ============== Atom line specification ============= *)
+(* the number and type of values in each line is expected to match the current
+   atom properties declaration, or default to "species:S:1:pos:R:3" *)
+<AtomLine> = <whitespaces>? <AtomValue> {<whitespaces> <AtomValue>}+;
+
+<AtomValue> = { <Number> | <String> | <Logical> };
+
+
+(* ================= Building blocks ================== *)
+(* <LF> is line feed (\n), <CR> carriage return (\r), <SP> is space, <HT> is horizontal tab (\t) *)
+<newline> = { <LF> | { <CR> <LF> } };
+(* single whitespace *)
+<whitespace> = { <SP> | <HT> };
+(* one or more whitespace *)
+<whitespaces> = {<whitespace>}+;
+
+
+
+<Logical> = { 'T' | 'TRUE' | 'True' | 'true' | 'F' | 'FALSE' | 'False' | 'false' };
+
+
+<digit> = { '0' | '1' | '2' | '3' | '4' | '5' | '6' | '7' | '8' | '9' };
+<UnsignedInteger> = { <digit> }+;
+<Integer> = { '+' | '-' }? <UnsignedInteger>;
+
+(* the exponent in float can be either E or D to support both C and Fortran conventions *)
+<Float> = <Integer> {'.' <UnsignedInteger>}? {{ 'e' | 'E' | 'd' | 'D' } <Integer>}?;
+<Number> = { <Integer> | <Float> };
+
+
+
+(* Character set for identifiers *)
+<StartIdentChars> = {
+    'A' | 'a' | 'B' | 'b' | 'C' | 'c' | 'D' | 'd' | 'E' | 'e' | 'F' | 'f' |
+    'G' | 'g' | 'H' | 'h' | 'I' | 'i' | 'J' | 'j' | 'K' | 'k' | 'L' | 'l' |
+    'M' | 'm' | 'N' | 'n' | 'O' | 'o' | 'P' | 'p' | 'Q' | 'q' | 'R' | 'r' |
+    'S' | 's' | 'T' | 't' | 'U' | 'u' | 'V' | 'v' | 'W' | 'w' | 'X' | 'x' |
+    'Y' | 'y' | 'Z' | 'z' | '_'
+};
+<IdentChars> = {
+    '0' | '1' | '2' | '3' | '4' | '5' | '6' | '7' | '8' | '9' | <StartIdentChars>
+};
+<Identifier> = <StartIdentChars> { <IdentChars> }*;
+
+(* All Printable ASCII characters except for '=', whitespaces, double quote,
+   comma, [, ], {, }, \, and newline *)
+<BareStringChars> = {
+    <IdentChars> |
+    '@' | '`' | '!' | '#' | '$' | '%' | '&' | '(' | ')' | '*' | '+' |
+    '-' | '.' | '/' | ':' | ';' | '<' | '|' | '>' | '^' | '~' | '?' | "'"
+};
+
+<QuotedStringChars> = {
+    <BareStringChars> | <SP> | <HT> | '\n' | '"' | '=' | ']' | '[' | '}' | '{' | '\' | ','
+};
+
+<String> = { <BareString> | <QuotedString> };
+
+<BareString> = { <BareStringChars> }+;
+<QuotedString> = '"' { <QuotedStringChars> }* '"' ;

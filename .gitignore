@@ -1,0 +1,8 @@
+build/
+dist/
+
+exyz/_exyz.c
+exyz/*.so
+
+*.o
+*.egg-info
