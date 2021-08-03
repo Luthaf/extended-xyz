@@ -640,7 +640,7 @@ TEST_CASE("Array properties -- new style -- 1D") {
     }
 }
 
-TEST_CASE("Array properties -- old style") {
+TEST_CASE("Array properties -- old style with quote") {
     exyz_atom_property_t* properties = nullptr;
     size_t properties_count = 0;
 
@@ -667,6 +667,18 @@ TEST_CASE("Array properties -- old style") {
         CHECK(array.data.integer[2] == 5);
 
         free_data(properties, properties_count, info, info_count);
+
+        // single element array
+        line = "Properties=species:S:1:pos:R:3 key= \"\t 5    \"";
+        status = exyz_read_comment_line(
+            line.data(), line.size(), &properties, &properties_count, &info, &info_count
+        );
+        REQUIRE(status == EXYZ_SUCCESS);
+
+        REQUIRE(info_count == 1);
+        CHECK(info[0].key == std::string("key"));
+        REQUIRE(info[0].type == EXYZ_INTEGER);
+        CHECK(info[0].data.integer == 5);
     }
 
     SECTION("real") {
@@ -709,6 +721,18 @@ TEST_CASE("Array properties -- old style") {
         CHECK(array.data.real[2] == 5.5);
 
         free_data(properties, properties_count, info, info_count);
+
+        // single element array
+        line = "Properties=species:S:1:pos:R:3 key= \"\t 5.5    \"";
+        status = exyz_read_comment_line(
+            line.data(), line.size(), &properties, &properties_count, &info, &info_count
+        );
+        REQUIRE(status == EXYZ_SUCCESS);
+
+        REQUIRE(info_count == 1);
+        CHECK(info[0].key == std::string("key"));
+        REQUIRE(info[0].type == EXYZ_REAL);
+        CHECK(info[0].data.real == 5.5);
     }
 
 
@@ -732,7 +756,31 @@ TEST_CASE("Array properties -- old style") {
         CHECK(array.data.boolean[2] == false);
 
         free_data(properties, properties_count, info, info_count);
+
+        // single element array
+        line = "Properties=species:S:1:pos:R:3 key= \"\t T    \"";
+        status = exyz_read_comment_line(
+            line.data(), line.size(), &properties, &properties_count, &info, &info_count
+        );
+        REQUIRE(status == EXYZ_SUCCESS);
+
+        REQUIRE(info_count == 1);
+        CHECK(info[0].key == std::string("key"));
+        REQUIRE(info[0].type == EXYZ_BOOL);
+        CHECK(info[0].data.boolean == true);
     }
+
+    SECTION("errors") {
+        // TODO: missing end of array
+    }
+}
+
+TEST_CASE("Array properties -- old style with brackets") {
+    exyz_atom_property_t* properties = nullptr;
+    size_t properties_count = 0;
+
+    exyz_info_t* info = nullptr;
+    size_t info_count = 0;
 
     SECTION("strings") {
         std::string line = "Properties=species:S:1:pos:R:3 key={\t   bar  \t  baz\t  }";
@@ -796,6 +844,22 @@ TEST_CASE("Array properties -- old style") {
         CHECK(array.data.string[4] == std::string("string"));
 
         free_data(properties, properties_count, info, info_count);
+
+        // single element array
+        line = "Properties=species:S:1:pos:R:3 key= { Foo} key2={\"bar  \"}";
+        status = exyz_read_comment_line(
+            line.data(), line.size(), &properties, &properties_count, &info, &info_count
+        );
+        REQUIRE(status == EXYZ_SUCCESS);
+
+        REQUIRE(info_count == 2);
+        CHECK(info[0].key == std::string("key"));
+        REQUIRE(info[0].type == EXYZ_STRING);
+        CHECK(info[0].data.string == std::string("Foo"));
+
+        CHECK(info[1].key == std::string("key2"));
+        REQUIRE(info[1].type == EXYZ_STRING);
+        CHECK(info[1].data.string == std::string("bar  "));
     }
 
     SECTION("errors") {

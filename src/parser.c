@@ -977,13 +977,20 @@ static exyz_status_t try_read_new_style_array(parser_context_t* ctx, exyz_array_
     }
 }
 
-static exyz_status_t try_read_array(parser_context_t* ctx, exyz_array_t* array) {
+static exyz_status_t try_read_array(
+    parser_context_t* ctx,
+    exyz_array_t* array,
+    bool* old_style_array
+) {
     char first = ctx->string[ctx->current];
     if (first == '[') {
+        *old_style_array = false;
         return try_read_new_style_array(ctx, array);
     } else if (first == '{') {
+        *old_style_array = true;
         return try_read_old_style_array_bracket(ctx, array);
     } else if (first == '"') {
+        *old_style_array = true;
         return try_read_old_style_array_quote(ctx, array);
     } else {
         return EXYZ_FAILED_READING;
@@ -1017,10 +1024,29 @@ static exyz_status_t info_value(parser_context_t* ctx, exyz_info_t* info) {
         .nrows = 0,
         .ncols = 0,
     };
-    exyz_status_t status = try_read_array(ctx, &value_array);
+    bool old_style_array = false;
+    exyz_status_t status = try_read_array(ctx, &value_array, &old_style_array);
     if (status == EXYZ_SUCCESS) {
-        info->type = EXYZ_ARRAY;
-        info->data.array = value_array;
+        if (old_style_array && value_array.ncols == 1 && value_array.nrows == 1) {
+            // single element old-style arrays are interpreted as scalar
+            info->type = value_array.type;
+            if (value_array.type == EXYZ_INTEGER) {
+                info->data.integer = value_array.data.integer[0];
+            } else if (value_array.type == EXYZ_REAL) {
+                info->data.real = value_array.data.real[0];
+            } else if (value_array.type == EXYZ_BOOL) {
+                info->data.boolean = value_array.data.boolean[0];
+            } else {
+                assert(value_array.type == EXYZ_STRING);
+                info->data.string = value_array.data.string[0];
+                value_array.data.string[0] = NULL;
+            }
+            exyz_array_free(value_array);
+        } else {
+            info->type = EXYZ_ARRAY;
+            info->data.array = value_array;
+        }
+
         return EXYZ_SUCCESS;
     } else if (status != EXYZ_FAILED_READING) {
         return status;
