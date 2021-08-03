@@ -46,10 +46,11 @@ static bool is_end_of_value(char c, bool inside_array) {
     // - whitespace
     // - end of input
     // - '"': end of array, old style array
+    // - '}': end of array, old style array
     // - ',': next item, new style array
     // - ']': end of array, new style array
     return is_whitespace(c) || c == '\0' || (
-        inside_array && (c == ',' || c == ']' || c == '"')
+        inside_array && (c == ',' || c == ']' || c == '"' || c == '}')
     );
 }
 
@@ -523,9 +524,14 @@ static exyz_status_t read_array_value(
     }
 }
 
-static exyz_status_t try_read_old_style_array_quote(parser_context_t* ctx, exyz_array_t* array) {
-    if (ctx->string[ctx->current] != '"') {
-        return error("old style array must start with \", got '%c'", ctx->string[ctx->current]);
+static exyz_status_t try_read_old_style_array(
+    parser_context_t* ctx,
+    exyz_array_t* array,
+    char open_delim,
+    char close_delim
+) {
+    if (ctx->string[ctx->current] != open_delim) {
+        return error("old style array must start with '%c', got '%c'", open_delim, ctx->string[ctx->current]);
     }
 
     // initialize array type to ensure we can free safely it in the error case
@@ -536,7 +542,6 @@ static exyz_status_t try_read_old_style_array_quote(parser_context_t* ctx, exyz_
     ctx->current += 1;
 
     exyz_status_t status = EXYZ_SUCCESS;
-    size_t current_index = 0;
 
     // count the number of entries in the array and try to guess the type of the array
     size_t n_values = 0;
@@ -545,7 +550,7 @@ static exyz_status_t try_read_old_style_array_quote(parser_context_t* ctx, exyz_
     while (ctx->current < ctx->length) {
         skip_whitespaces(ctx);
 
-        if (ctx->string[ctx->current] == '"') {
+        if (ctx->string[ctx->current] == close_delim) {
             found_array_end = true;
             break;
         }
@@ -555,7 +560,7 @@ static exyz_status_t try_read_old_style_array_quote(parser_context_t* ctx, exyz_
             goto error;
         }
 
-        if (type == EXYZ_STRING) {
+        if (type == EXYZ_STRING && open_delim == '"') {
             // this is actually a quoted string
             status = EXYZ_FAILED_READING;
             goto error;
@@ -563,14 +568,14 @@ static exyz_status_t try_read_old_style_array_quote(parser_context_t* ctx, exyz_
         n_values += 1;
 
         char c = ctx->string[ctx->current];
-        if (!(is_whitespace(c) || c == '"')) {
+        if (!(is_whitespace(c) || c == close_delim)) {
             status = error("values should be separated by space in old style array, got '%c'", ctx->string[ctx->current]);
             goto error;
         }
     }
 
     if (!found_array_end) {
-        return error("expected '\"' to finish the array, found end of input");
+        return error("expected '%c' to finish the array, found end of input", close_delim);
     }
 
     // now that we know the type & size of the array, reset the parser and read
@@ -583,105 +588,41 @@ static exyz_status_t try_read_old_style_array_quote(parser_context_t* ctx, exyz_
     } else if (type == EXYZ_BOOL) {
         status = exyz_array_init_bool(array, 1, n_values);
     } else {
-        status = error("invalid type inside quoted array");
+        if (open_delim == '"') {
+            status = error("invalid type inside quoted array");
+        } else {
+            status = exyz_array_init_string(array, 1, n_values);
+        }
     }
 
     if (status != EXYZ_SUCCESS) {
         goto error;
     }
 
-
-    while (ctx->current < ctx->length) {
+    for (size_t i=0; i<n_values-1; i++) {
         skip_whitespaces(ctx);
 
-        if (ctx->string[ctx->current] == '"') {
-            ctx->current += 1;
-            break;
-        }
-
-        status = read_array_value(ctx, *array, current_index);
+        status = read_array_value(ctx, *array, i);
         if (status != EXYZ_SUCCESS) {
             goto error;
         }
-        current_index += 1;
 
-        char c = ctx->string[ctx->current];
-        if (!(is_whitespace(c) || c == '"')) {
-            status = error("expected whitespace between array values, got '%c'", ctx->string[ctx->current]);
+        if (!(is_whitespace(ctx->string[ctx->current]))) {
+            status = error("values should be separated by space in old style array, got '%c'", ctx->string[ctx->current]);
             goto error;
         }
     }
 
-    return EXYZ_SUCCESS;
-error:
-    // reset parser state
-    ctx->current = ctx_start;
-    exyz_array_free(*array);
-
-    return status;
-}
-
-static exyz_status_t try_read_old_style_array_bracket(parser_context_t* ctx, exyz_array_t* array) {
-    if (ctx->string[ctx->current] != '{') {
-        return error("old style array must start with {, got '%c'", ctx->string[ctx->current]);
-    }
-
-    size_t ctx_start = ctx->current;
-    ctx->current += 1;
-
-    exyz_status_t status = EXYZ_SUCCESS;
-    size_t current_index = 0;
-
-    // count the number of entries in the array
-    size_t n_values = 0;
-    bool found_array_end = false;
-    while (ctx->current < ctx->length) {
-        skip_whitespaces(ctx);
-
-        if (ctx->string[ctx->current] == '}') {
-            found_array_end = true;
-            break;
-        } else {
-            n_values += 1;
-            status = skip_string(ctx);
-            if (status != EXYZ_SUCCESS) {
-                goto error;
-            }
-
-            char c = ctx->string[ctx->current];
-            if (!(is_whitespace(c) || c == '}')) {
-                status = error("values should be separated by space in old style array, got '%c'", ctx->string[ctx->current]);
-                goto error;
-            }
-        }
-    }
-
-    if (!found_array_end) {
-        return error("expected '}' to finish the array, found end of input");
-    }
-
-    // now that we know the size of the array, reset the parser and read for
-    // real
-    ctx->current = ctx_start + 1;
-    status = exyz_array_init_string(array, 1, n_values);
+    // read the last value
+    skip_whitespaces(ctx);
+    status = read_array_value(ctx, *array, n_values - 1);
     if (status != EXYZ_SUCCESS) {
         goto error;
     }
 
-    while (ctx->current < ctx->length) {
-        skip_whitespaces(ctx);
-
-        if (ctx->string[ctx->current] == '}') {
-            ctx->current += 1;
-            break;
-        } else {
-            status = read_array_value(ctx, *array, current_index);
-            if (status != EXYZ_SUCCESS) {
-                goto error;
-            }
-            current_index += 1;
-        }
-    }
+    skip_whitespaces(ctx);
+    assert(ctx->string[ctx->current] == close_delim);
+    ctx->current += 1;
 
     return EXYZ_SUCCESS;
 error:
@@ -988,10 +929,10 @@ static exyz_status_t try_read_array(
         return try_read_new_style_array(ctx, array);
     } else if (first == '{') {
         *old_style_array = true;
-        return try_read_old_style_array_bracket(ctx, array);
+        return try_read_old_style_array(ctx, array, '{', '}');
     } else if (first == '"') {
         *old_style_array = true;
-        return try_read_old_style_array_quote(ctx, array);
+        return try_read_old_style_array(ctx, array, '"', '"');
     } else {
         return EXYZ_FAILED_READING;
     }

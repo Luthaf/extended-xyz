@@ -33,13 +33,18 @@ with newlines *)
     { <NewStyleArray1D> { <whitespaces>? ',' <whitespaces>? <NewStyleArray1D>}* }
 <whitespaces>? ']';
 
-<OldStyleArrayQuote> = '"' {
+<OldStyleArrayQuote> = '"' { <whitespaces>?
     { <Integer> { <whitespaces> <Integer> }* }              |
     { <Float> { <whitespaces> <Float> }* }                  |
     { <Logical> { <whitespaces> <Logical> }* }
-} '"';
+<whitespaces>? } '"';
 
-<OldStyleArrayBrackets> = '{' <String> { <whitespaces> <String> }* '}';
+<OldStyleArrayBrackets> = '{' <whitespaces>?
+    { <Integer> { <whitespaces> <Integer> }* }              |
+    { <Float> { <whitespaces> <Float> }* }                  |
+    { <Logical> { <whitespaces> <Logical> }* }              |
+    <String> { <whitespaces> <String> }*
+<whitespaces>? '}';
 
 
 (* ============== Atom line specification ============= *)

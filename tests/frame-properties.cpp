@@ -379,7 +379,7 @@ TEST_CASE("Array properties -- new style -- 2D") {
         REQUIRE(info[0].type == EXYZ_ARRAY);
 
         exyz_array_t array = info[0].data.array;
-        CHECK(array.type == EXYZ_INTEGER);
+        REQUIRE(array.type == EXYZ_INTEGER);
         REQUIRE(array.nrows == 2);
         REQUIRE(array.ncols == 2);
         CHECK(array.data.integer[0] == 1);
@@ -402,7 +402,7 @@ TEST_CASE("Array properties -- new style -- 2D") {
         REQUIRE(info[0].type == EXYZ_ARRAY);
 
         exyz_array_t array = info[0].data.array;
-        CHECK(array.type == EXYZ_REAL);
+        REQUIRE(array.type == EXYZ_REAL);
         REQUIRE(array.nrows == 2);
         REQUIRE(array.ncols == 2);
         CHECK(array.data.real[0] == 1);
@@ -425,7 +425,7 @@ TEST_CASE("Array properties -- new style -- 2D") {
         REQUIRE(info[0].type == EXYZ_ARRAY);
 
         exyz_array_t array = info[0].data.array;
-        CHECK(array.type == EXYZ_BOOL);
+        REQUIRE(array.type == EXYZ_BOOL);
         REQUIRE(array.nrows == 2);
         REQUIRE(array.ncols == 3);
         CHECK(array.data.boolean[0] == false);
@@ -450,7 +450,7 @@ TEST_CASE("Array properties -- new style -- 2D") {
         REQUIRE(info[0].type == EXYZ_ARRAY);
 
         auto array = info[0].data.array;
-        CHECK(array.type == EXYZ_STRING);
+        REQUIRE(array.type == EXYZ_STRING);
         REQUIRE(array.nrows == 2);
         REQUIRE(array.ncols == 3);
         CHECK(array.data.string[0] == std::string("3"));
@@ -491,7 +491,7 @@ TEST_CASE("Array properties -- new style -- 1D") {
         REQUIRE(info[0].type == EXYZ_ARRAY);
 
         exyz_array_t array = info[0].data.array;
-        CHECK(array.type == EXYZ_INTEGER);
+        REQUIRE(array.type == EXYZ_INTEGER);
         REQUIRE(array.nrows == 1);
         REQUIRE(array.ncols == 3);
         CHECK(array.data.integer[0] == 3);
@@ -513,7 +513,7 @@ TEST_CASE("Array properties -- new style -- 1D") {
         REQUIRE(info[0].type == EXYZ_ARRAY);
 
         exyz_array_t array = info[0].data.array;
-        CHECK(array.type == EXYZ_REAL);
+        REQUIRE(array.type == EXYZ_REAL);
         REQUIRE(array.nrows == 1);
         REQUIRE(array.ncols == 2);
         CHECK(array.data.real[0] == 3e3);
@@ -533,7 +533,7 @@ TEST_CASE("Array properties -- new style -- 1D") {
         REQUIRE(info[0].type == EXYZ_ARRAY);
 
         array = info[0].data.array;
-        CHECK(array.type == EXYZ_REAL);
+        REQUIRE(array.type == EXYZ_REAL);
         REQUIRE(array.nrows == 1);
         REQUIRE(array.ncols == 3);
         CHECK(array.data.real[0] == 3);
@@ -556,7 +556,7 @@ TEST_CASE("Array properties -- new style -- 1D") {
         REQUIRE(info[0].type == EXYZ_ARRAY);
 
         exyz_array_t array = info[0].data.array;
-        CHECK(array.type == EXYZ_BOOL);
+        REQUIRE(array.type == EXYZ_BOOL);
         REQUIRE(array.nrows == 1);
         REQUIRE(array.ncols == 3);
         CHECK(array.data.boolean[0] == false);
@@ -578,7 +578,7 @@ TEST_CASE("Array properties -- new style -- 1D") {
         REQUIRE(info[0].type == EXYZ_ARRAY);
 
         exyz_array_t array = info[0].data.array;
-        CHECK(array.type == EXYZ_STRING);
+        REQUIRE(array.type == EXYZ_STRING);
         REQUIRE(array.nrows == 1);
         REQUIRE(array.ncols == 2);
         CHECK(array.data.string[0] == std::string("bar"));
@@ -598,7 +598,7 @@ TEST_CASE("Array properties -- new style -- 1D") {
         REQUIRE(info[0].type == EXYZ_ARRAY);
 
         array = info[0].data.array;
-        CHECK(array.type == EXYZ_STRING);
+        REQUIRE(array.type == EXYZ_STRING);
         REQUIRE(array.nrows == 1);
         REQUIRE(array.ncols == 2);
         CHECK(array.data.string[0] == std::string("bar"));
@@ -618,7 +618,7 @@ TEST_CASE("Array properties -- new style -- 1D") {
         REQUIRE(info[0].type == EXYZ_ARRAY);
 
         array = info[0].data.array;
-        CHECK(array.type == EXYZ_STRING);
+        REQUIRE(array.type == EXYZ_STRING);
         REQUIRE(array.nrows == 1);
         REQUIRE(array.ncols == 5);
         CHECK(array.data.string[0] == std::string("3"));
@@ -659,7 +659,7 @@ TEST_CASE("Array properties -- old style with quote") {
         REQUIRE(info[0].type == EXYZ_ARRAY);
 
         exyz_array_t array = info[0].data.array;
-        CHECK(array.type == EXYZ_INTEGER);
+        REQUIRE(array.type == EXYZ_INTEGER);
         REQUIRE(array.nrows == 1);
         REQUIRE(array.ncols == 3);
         CHECK(array.data.integer[0] == 3);
@@ -693,7 +693,7 @@ TEST_CASE("Array properties -- old style with quote") {
         REQUIRE(info[0].type == EXYZ_ARRAY);
 
         exyz_array_t array = info[0].data.array;
-        CHECK(array.type == EXYZ_REAL);
+        REQUIRE(array.type == EXYZ_REAL);
         REQUIRE(array.nrows == 1);
         REQUIRE(array.ncols == 2);
         CHECK(array.data.real[0] == 3e3);
@@ -713,7 +713,7 @@ TEST_CASE("Array properties -- old style with quote") {
         REQUIRE(info[0].type == EXYZ_ARRAY);
 
         array = info[0].data.array;
-        CHECK(array.type == EXYZ_REAL);
+        REQUIRE(array.type == EXYZ_REAL);
         REQUIRE(array.nrows == 1);
         REQUIRE(array.ncols == 3);
         CHECK(array.data.real[0] == 3);
@@ -748,7 +748,7 @@ TEST_CASE("Array properties -- old style with quote") {
         REQUIRE(info[0].type == EXYZ_ARRAY);
 
         exyz_array_t array = info[0].data.array;
-        CHECK(array.type == EXYZ_BOOL);
+        REQUIRE(array.type == EXYZ_BOOL);
         REQUIRE(array.nrows == 1);
         REQUIRE(array.ncols == 3);
         CHECK(array.data.boolean[0] == false);
@@ -782,6 +782,129 @@ TEST_CASE("Array properties -- old style with brackets") {
     exyz_info_t* info = nullptr;
     size_t info_count = 0;
 
+    SECTION("integers") {
+        std::string line = "Properties=species:S:1:pos:R:3 key={   3 -4   \t 5    }";
+        auto status = exyz_read_comment_line(
+            line.data(), line.size(), &properties, &properties_count, &info, &info_count
+        );
+        REQUIRE(status == EXYZ_SUCCESS);
+
+        REQUIRE(info_count == 1);
+        CHECK(info[0].key == std::string("key"));
+        REQUIRE(info[0].type == EXYZ_ARRAY);
+
+        exyz_array_t array = info[0].data.array;
+        REQUIRE(array.type == EXYZ_INTEGER);
+        REQUIRE(array.nrows == 1);
+        REQUIRE(array.ncols == 3);
+        CHECK(array.data.integer[0] == 3);
+        CHECK(array.data.integer[1] == -4);
+        CHECK(array.data.integer[2] == 5);
+
+        free_data(properties, properties_count, info, info_count);
+
+        // single element array
+        line = "Properties=species:S:1:pos:R:3 key= {\t 5    }";
+        status = exyz_read_comment_line(
+            line.data(), line.size(), &properties, &properties_count, &info, &info_count
+        );
+        REQUIRE(status == EXYZ_SUCCESS);
+
+        REQUIRE(info_count == 1);
+        CHECK(info[0].key == std::string("key"));
+        REQUIRE(info[0].type == EXYZ_INTEGER);
+        CHECK(info[0].data.integer == 5);
+    }
+
+    SECTION("real") {
+        std::string line = "Properties=species:S:1:pos:R:3 key={3e3 5.5}";
+        auto status = exyz_read_comment_line(
+            line.data(), line.size(), &properties, &properties_count, &info, &info_count
+        );
+        REQUIRE(status == EXYZ_SUCCESS);
+
+        REQUIRE(info_count == 1);
+        CHECK(info[0].key == std::string("key"));
+        REQUIRE(info[0].type == EXYZ_ARRAY);
+
+        exyz_array_t array = info[0].data.array;
+        REQUIRE(array.type == EXYZ_REAL);
+        REQUIRE(array.nrows == 1);
+        REQUIRE(array.ncols == 2);
+        CHECK(array.data.real[0] == 3e3);
+        CHECK(array.data.real[1] == 5.5);
+
+        free_data(properties, properties_count, info, info_count);
+
+        // mixed data types
+        line = "Properties=species:S:1:pos:R:3 key={3 -4 5.5}";
+        status = exyz_read_comment_line(
+            line.data(), line.size(), &properties, &properties_count, &info, &info_count
+        );
+        REQUIRE(status == EXYZ_SUCCESS);
+
+        REQUIRE(info_count == 1);
+        CHECK(info[0].key == std::string("key"));
+        REQUIRE(info[0].type == EXYZ_ARRAY);
+
+        array = info[0].data.array;
+        REQUIRE(array.type == EXYZ_REAL);
+        REQUIRE(array.nrows == 1);
+        REQUIRE(array.ncols == 3);
+        CHECK(array.data.real[0] == 3);
+        CHECK(array.data.real[1] == -4);
+        CHECK(array.data.real[2] == 5.5);
+
+        free_data(properties, properties_count, info, info_count);
+
+        // single element array
+        line = "Properties=species:S:1:pos:R:3 key={\t 5.5    }";
+        status = exyz_read_comment_line(
+            line.data(), line.size(), &properties, &properties_count, &info, &info_count
+        );
+        REQUIRE(status == EXYZ_SUCCESS);
+
+        REQUIRE(info_count == 1);
+        CHECK(info[0].key == std::string("key"));
+        REQUIRE(info[0].type == EXYZ_REAL);
+        CHECK(info[0].data.real == 5.5);
+    }
+
+
+    SECTION("bool") {
+        std::string line = "Properties=species:S:1:pos:R:3 key={False TRUE F}";
+        auto status = exyz_read_comment_line(
+            line.data(), line.size(), &properties, &properties_count, &info, &info_count
+        );
+        REQUIRE(status == EXYZ_SUCCESS);
+
+        REQUIRE(info_count == 1);
+        CHECK(info[0].key == std::string("key"));
+        REQUIRE(info[0].type == EXYZ_ARRAY);
+
+        exyz_array_t array = info[0].data.array;
+        REQUIRE(array.type == EXYZ_BOOL);
+        REQUIRE(array.nrows == 1);
+        REQUIRE(array.ncols == 3);
+        CHECK(array.data.boolean[0] == false);
+        CHECK(array.data.boolean[1] == true);
+        CHECK(array.data.boolean[2] == false);
+
+        free_data(properties, properties_count, info, info_count);
+
+        // single element array
+        line = "Properties=species:S:1:pos:R:3 key={ T  }";
+        status = exyz_read_comment_line(
+            line.data(), line.size(), &properties, &properties_count, &info, &info_count
+        );
+        REQUIRE(status == EXYZ_SUCCESS);
+
+        REQUIRE(info_count == 1);
+        CHECK(info[0].key == std::string("key"));
+        REQUIRE(info[0].type == EXYZ_BOOL);
+        CHECK(info[0].data.boolean == true);
+    }
+
     SECTION("strings") {
         std::string line = "Properties=species:S:1:pos:R:3 key={\t   bar  \t  baz\t  }";
         auto status = exyz_read_comment_line(
@@ -794,7 +917,7 @@ TEST_CASE("Array properties -- old style with brackets") {
         REQUIRE(info[0].type == EXYZ_ARRAY);
 
         exyz_array_t array = info[0].data.array;
-        CHECK(array.type == EXYZ_STRING);
+        REQUIRE(array.type == EXYZ_STRING);
         REQUIRE(array.nrows == 1);
         REQUIRE(array.ncols == 2);
         CHECK(array.data.string[0] == std::string("bar"));
@@ -814,7 +937,7 @@ TEST_CASE("Array properties -- old style with brackets") {
         REQUIRE(info[0].type == EXYZ_ARRAY);
 
         array = info[0].data.array;
-        CHECK(array.type == EXYZ_STRING);
+        REQUIRE(array.type == EXYZ_STRING);
         REQUIRE(array.nrows == 1);
         REQUIRE(array.ncols == 2);
         CHECK(array.data.string[0] == std::string("bar"));
@@ -834,7 +957,7 @@ TEST_CASE("Array properties -- old style with brackets") {
         REQUIRE(info[0].type == EXYZ_ARRAY);
 
         array = info[0].data.array;
-        CHECK(array.type == EXYZ_STRING);
+        REQUIRE(array.type == EXYZ_STRING);
         REQUIRE(array.nrows == 1);
         REQUIRE(array.ncols == 5);
         CHECK(array.data.string[0] == std::string("3"));

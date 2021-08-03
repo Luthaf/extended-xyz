@@ -52,7 +52,7 @@ TODO
 
 ```bash
 mkdir build && cd build
-cmake -DEXYZ_BUILD_TESTS=ON ..
+cmake -DEXYZ_BUILD_TESTS=ON -DEXYZ_SANITIZERS=ON ..
 make
 ctest
 ```
