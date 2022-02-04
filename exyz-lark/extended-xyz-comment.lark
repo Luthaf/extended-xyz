@@ -1,0 +1,78 @@
+// ============ comment line specification ============
+comment_line: whitespaces? frame_property? (( whitespaces frame_property )+)? whitespaces?
+
+frame_property: ( atom_properties_list | generic_frame_property )
+
+generic_frame_property: frame_property_key whitespaces? "=" whitespaces? frame_property_value
+frame_property_key: string
+frame_property_value: array | integer | float | logical | string
+
+// atom properties declaration
+atom_properties_list: "\""? "Properties" "\""? whitespaces? "=" whitespaces? "\""? single_atom_property (":" single_atom_property)* "\""?
+single_atom_property: identifier ":" atom_property_type ":" unsigned_integer
+!atom_property_type: "L" | "S" | "R" | "I"
+
+// arrays properties
+array: ( new_style_array | old_style_array )
+
+new_style_array: new_style_array1d | new_style_array2d
+new_style_array1d: "[" whitespaces? (
+    | comma_separated_integers
+    | comma_separated_float
+    | comma_separated_logical
+    | comma_separated_string
+    | ) whitespaces? "]"
+
+comma_separated_integers: integer ( whitespaces? "," whitespaces? integer)*
+comma_separated_float:    float ( whitespaces? "," whitespaces? float)*
+comma_separated_logical:  logical ( whitespaces? "," whitespaces? logical)*
+comma_separated_string:   string ( whitespaces? "," whitespaces? string)*
+
+new_style_array2d: "[" whitespaces? ( new_style_array1d ( whitespaces? "," whitespaces? new_style_array1d )* ) whitespaces? "]"
+
+old_style_array: "\"" whitespaces? ws_separated_values whitespaces? "\""
+    | "{" whitespaces? ws_separated_values whitespaces? "}"
+
+?ws_separated_values: ws_separated_integers | ws_separated_floats | ws_separated_logicals | ws_separated_strings
+
+ws_separated_integers: integer ( whitespaces integer )*
+ws_separated_floats:   float ( whitespaces float )*
+ws_separated_logicals: logical ( whitespaces logical )*
+ws_separated_strings:  string ( whitespaces string )*
+
+// ================= building blocks ==================
+// single whitespace
+whitespace: " " | "\t"
+// one or more whitespace
+whitespaces: (whitespace)+
+
+!logical: "t" | "T" | "true" | "True" | "TRUE" | "f" | "F" | "false" | "False" | "FALSE"
+
+digit: "0".."9"
+unsigned_integer: ( digit )+
+!integer: ( "+" | "-" )? unsigned_integer
+!decimal: unsigned_integer "." unsigned_integer | "." unsigned_integer
+
+// the exponent in float can be either e or d to support both c and fortran conventions
+!exponent: ( "e" | "E" | "d" | "D" ) integer
+float: decimal | integer exponent | decimal exponent
+
+// character set for identifiers
+letters: "a".."z" | "A".."Z"
+identifier: ("_" | letters) ("_" | letters | digit)*
+
+// // all printable ascii characters except for "=", whitespaces, double quote,
+// // comma, [, ], {, }, \, and newline
+!bare_string_chars: "_" | letters | digit
+    | "@" | "`" | "!" | "#" | "$" | "%" | "&" | "(" | ")" | "*" | "+"
+    | "-" | "." | "/" | ":" | ";" | "<" | "|" | ">" | "^" | "~" | "?" | "'"
+
+!escaped_chars: "\\" (letters | "\"")
+
+!quoted_string_chars: bare_string_chars | escaped_chars
+    | " " | "\t" | "\n" | "=" | "[" | "]" | "{" | "}" | ","
+
+string: bare_string | quoted_string
+
+bare_string: ( bare_string_chars )+
+quoted_string: "\"" quoted_string_chars* "\""

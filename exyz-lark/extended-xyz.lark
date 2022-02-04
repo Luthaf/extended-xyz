@@ -1,0 +1,16 @@
+// file contains one or more frames separated by newlines, and optionally ends
+// with newlines
+file: frame ( newline frame )* ( newline )? ( newline )?
+
+// frame starts with the number of atoms, then a comment line and then atom lines
+frame: unsigned_integer newline comment_line ( newline atom_line )*
+
+// ============== atom line specification =============
+// the number and type of values in each line is expected to match the current
+// atom properties declaration, or default to "species:s:1:pos:r:3"
+atom_line: whitespaces? atom_value (whitespaces atom_value)+
+
+atom_value: integer | float | logical | string
+
+// ================= building blocks ==================
+newline: "\n" | "\r\n"
